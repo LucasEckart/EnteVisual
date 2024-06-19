@@ -1,0 +1,420 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-users me-1"></i> Lista de Clientes
+
+    </div>
+
+
+
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <button type="button" class="btn btn-primary" onclick="abrirModal()">Agregar nuevo</button>
+            </div>
+        </div>
+    </div>
+    <hr />
+
+
+    <table id="Tabla" class="  table is-striped is-hoverable" style="width: 100%">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Combo</th>
+                <th>Precio</th>
+                <th>Vencimiento</th>
+                <th>Extras</th>
+                <th>Mes</th>
+                <th>Abonado</th>
+                <th></th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+
+<div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar nuevo</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <input id="txtId" type="hidden" />
+
+                <div class="row g-2">
+
+                    <div class="col">
+                        <div class="mb-3">
+                            <label class="form-label">Cliente</label>
+                            <select id="cboCliente" class="form-select">
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Combo</label>
+                            <select id="cboCombo" class="form-select">
+                            </select>
+                        </div>
+
+                        <div class="col-sm-12">
+                            <label for="txtPrecio" class="form-label">Precio</label>
+                            <input autocomplete="off" class="form-control" id="txtPrecio">
+                        </div>
+
+                        <div class="col-sm-12">
+                            <label for="txtVencimiento" class="form-label">Vencimiento</label>
+                            <input autocomplete="off" class="form-control" id="txtVencimiento">
+                        </div>
+
+                    </div>
+
+                    <div class="col">
+                        <div class="col-sm-12">
+                            <label for="txtExtras" class="form-label">Extras</label>
+                            <textarea class="form-control form-control-lg" id="txtExtras" rows="4" style="resize: vertical;"></textarea>
+                        </div>
+
+
+                        <div class="col-sm-12">
+                            <label for="cboMes" class="form-label">Mes</label>
+                            <select class="form-select" id="cboMes">
+                                <option value="Enero">Enero</option>
+                                <option value="Febrero">Febrero</option>
+                                <option value="Marzo">Marzo</option>
+                                <option value="Abril">Abril</option>
+                                <option value="Mayo">Mayo</option>
+                                <option value="Junio">Junio</option>
+                                <option value="Julio">Julio</option>
+                                <option value="Agosto">Agosto</option>
+                                <option value="Octubre">Octubre</option>
+                                <option value="Novimebre">Novimebre</option>
+                                <option value="Diciembre">Diciembre</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Abonado</label>
+                            <select id="cboAbonado" class="form-select">
+                                <option value="1">Si</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+
+
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <div id="mensajeError" class="alert alert-danger" role="alert">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="Guardar()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section scripts{
+    <script>
+
+
+
+        var tablaData
+        var filaSeleccionada
+
+        tablaData = $("#Tabla").DataTable({
+
+            responsive: true,
+            ordering: false,
+
+            "ajax": {
+                url: '@Url.Action("listarCopy", "Copywriting")',
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8"
+
+            },
+            "columns": [
+                {
+                    "data": "IdCliente", "render": function (data) {
+                        return data.Nombre
+                    }
+                },
+                {
+                    "data": "IdCombo", "render": function (data) {
+                        return data.Nombre
+                    }
+                },
+                { "data": "Precio" },
+                { "data": "Vencimiento" },
+                {
+                    data: "Extras",
+                    render: function (data) {
+                        return '<div style="max-width: 200px; word-wrap: break-word;">' + data + '</div>';
+                    }
+                },                { "data": "Mes" },
+
+                {
+                    "data": "Abonado", "render": function (valor) {
+                        if (valor) {
+                            return '<span class="badge bg-success"> SI</span>'
+                        }
+                        else {
+                            return '<span class="badge bg-danger"> NO</span>'
+                        }
+                    }
+                },
+                {
+                    "defaultContent": '<button type ="button" class = "btn btn-primary btn-sm btn-editar"> <i class="fas fa-pen"> </i> </button>' +
+                        '<button type ="button" class = "btn btn-danger  btn-sm ms-2 btn-eliminar"> <i class="fas fa-trash"> </i> </button>',
+                    "orderable": false,
+                    "serchable": false,
+                }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/2.0.2/i18n/es-ES.json"
+            }
+        });
+
+
+        //Obtener la lista de los Clientes
+        jQuery.ajax({
+           url: '@Url.Action("listarCliente", "Home")',
+           type: "GET",
+           data: null,
+           dataType: "json",
+           contentType: "application/json: charset=utf-8",
+           success: function (data) {
+
+               console.log(data)
+               $("<option>").attr({ "value": "0", "disabled": "true" }).text("Seleccionar").appendTo("#cboCliente")
+
+               $.each(data.data, function (index, valor) {
+                   $("<option>").attr({ "value": valor.IdCliente }).text(valor.Nombre).appendTo("#cboCliente")
+               })
+
+           }
+
+       });
+
+
+        //Obtener la lista de combos
+        jQuery.ajax({
+            url: '@Url.Action("listarCombo", "Copywriting")',
+            type: "GET",
+            data: null,
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            success: function (data) {
+
+                console.log(data)
+                $("<option>").attr({ "value": "0", "disabled": "true" }).text("Seleccionar").appendTo("#cboCombo");
+
+                $.each(data.data, function (index, item) {
+                    $("<option>").attr({ "value": item.Id }).text(item.Nombre).appendTo("#cboCombo");
+                })
+            },
+            error: function (error) {
+                console.log(error)
+            }
+
+        });
+
+
+
+        //Abrir el modal
+        function abrirModal(json) {
+
+            $("#cboCliente").val($("#cboCliente option:first").val());
+            $("#cboCombo").val($("#cboCombo option:first").val());
+            $("#txtPrecio").val("");
+            $("#txtVencimiento").val("");
+            $("#txtExtras").val("");
+            $("#cboMes").val($("#cboMes option:first").val());
+            $("#cboAbonado").val(1);
+
+            $("#mensajeError").hide();
+
+            if (json != null) {
+
+                $("#txtId").val(json.Id);
+                $("#cboCliente").val(json.IdCliente.IdCliente);
+                $("#cboCombo").val(json.IdCombo.Id);
+                $("#txtPrecio").val(json.Precio);
+                $("#txtVencimiento").val(json.Vencimiento);
+                $("#txtExtras").val(json.Extras);
+                $("#cboMes").val(json.Mes);
+                $("#cboAbonado").val(json.Abonado == true ? 1 : 0);
+            }
+            $("#formModal").modal("show");
+        }
+
+
+        $("#Tabla tbody").on("click", '.btn-editar', function () {
+            filaSeleccionada = $(this).closest("tr");
+            var data = tablaData.row(filaSeleccionada).data();
+            abrirModal(data);
+        });
+
+
+
+
+        function Guardar() {
+
+
+            var Copywriting = {
+                Id: $("#txtId").val(),
+                IdCliente: {
+                    IdCliente: $("#cboCliente option:selected").val(),
+                    Nombre: $("#cboCliente option:selected").text(),
+                },
+
+                IdCombo: {
+                    Id: $("#cboCombo option:selected").val(),
+                    Nombre: $("#cboCombo option:selected").text(),
+                },
+
+                Precio: $("#txtPrecio").val(),
+                Vencimiento: $("#txtVencimiento").val(),
+                Extras: $("#txtExtras").val(),
+                Mes: $("#cboMes").val(),
+                Abonado: $("#cboAbonado").val() == 1 ? true : false,
+
+            }
+
+            jQuery.ajax({
+
+                url: '@Url.Action("guardarCopy", "Copywriting")',
+                type: "POST",
+                data: JSON.stringify({ copy: Copywriting }),
+                dataType: "json",
+                contentType: "application/json: charset=utf-8",
+                success: function (data) {
+
+                    $(".modal-body").LoadingOverlay("hide");
+                    //Nuevo Copywriting
+                    if (Copywriting.Id == 0) {
+
+                        if (data.resultado != 0) {
+                            Copywriting.Id = data.resultado
+                            tablaData.row.add(Copywriting).draw(false)
+                            $("#formModal").modal("hide");
+                            tablaData.ajax.reload();
+
+                        }
+                        else {
+                            $("#mensajeError").text(data.mensaje);
+                            $("#mensajeError").show();
+
+
+                        }
+                    }
+                    //Editar Copywriting
+                    else {
+                        if (data.resultado) {
+                            tablaData.row(filaSeleccionada).data(Copywriting).draw(false);
+                            filaSeleccionada = null
+                            $("#formModal").modal("hide");
+                            tablaData.ajax.reload();
+                        }
+                        else {
+                            $("#mensajeError").text(data.mensaje);
+                            $("#mensajeError").show();
+                        }
+                    }
+                },
+                error: function (error) {
+                    $(".modal-body").LoadingOverlay("hide");
+                    $("#mensajeError").text("Error ajax");
+                    $("#mensajeError").show();
+                },
+
+                beforeSend: function () {
+
+                    $(".modal-body").LoadingOverlay("show", {
+                        imageResizeFactor: 2,
+                        text: "cargando...",
+                        size: 14
+                    });
+
+
+                }
+            })
+        }
+
+
+
+
+
+        $("#Tabla tbody").on("click", '.btn-eliminar', function () {
+
+            var copySeleccionado = $(this).closest("tr");
+            var data = tablaData.row(copySeleccionado).data();
+            console.log(data)
+            Swal.fire({
+                title: "¿Estas seguro?",
+                text: "¿Desea eliminar el combo?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                cancelButtonText: "Cancelar",
+                confirmButtonText: "Eliminar",
+
+            })
+
+            .then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: "Eliminado!",
+                    text: "Combo eliminado",
+                    icon: "success",
+
+                });
+                jQuery.ajax({
+                    url: '@Url.Action("eliminarCopy", "Copywriting")',
+                    type: "POST",
+                    data: JSON.stringify({ id: data.Id }),
+                    dataType: "json",
+                    contentType: "application/json: charset=utf-8",
+
+                    success: function (data) {
+                        if (data.resultado) {
+                            tablaData.row(copySeleccionado).remove().draw()
+                        }
+                        else {
+                            Swal.fire("No se pudo eliminar el Copy.", data.mensaje, "error")
+                        }
+
+                     }
+
+                })
+
+            }
+
+        });
+
+})
+
+
+
+    </script>
+}

@@ -1,0 +1,288 @@
+﻿
+@{
+    ViewBag.Title = "Combos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-users me-1"></i> Lista de Combos
+
+    </div>
+
+
+
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <button type="button" class="btn btn-primary" onclick="abrirModal()">Agregar nuevo</button>
+            </div>
+        </div>
+    </div>
+    <hr />
+
+
+    <table id="Tabla" class="  table is-striped is-hoverable" style="width: 100%">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>CantidadPorDia</th>
+                <th>Precio</th>
+                <th>Detalle</th>
+                <th></th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+
+<div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Nuevo combo</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <input id="txtId" type="hidden" />
+
+                <div class="row g-2">
+
+                    <div class="col-sm-12">
+                        <label for="txtNombre" class="form-label">Nombre</label>
+                        <input type="email" autocomplete="off" class="form-control" id="txtNombre">
+                    </div>
+
+                    <div class="col-sm-12">
+                        <label for="txtCantidadPordia" class="form-label">Cantidad Por dia</label>
+                        <input type="email" autocomplete="off" class="form-control" id="txtCantidadPordia">
+                    </div>
+
+                    <div class="col-sm-12">
+                        <label for="txtPrecio" class="form-label">Precio</label>
+                        <input type="email" autocomplete="off" class="form-control" id="txtPrecio">
+                    </div>
+
+                    <div class="col-sm-12">
+                        <label for="txtDetalle" class="form-label">Detalle</label>
+                        <input type="email" autocomplete="off" class="form-control" id="txtDetalle">
+                    </div>
+
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <div id="mensajeError" class="alert alert-danger" role="alert">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="Guardar()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts{
+
+    <script>
+
+
+        var tablaData
+        var filaSeleccionada
+
+
+        tablaData = $("#Tabla").DataTable({
+
+            responsive: true,
+            ordering: false,
+
+            "ajax": {
+                url: '@Url.Action("listarCombo", "Copywriting")',
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8"
+            },
+
+            "columns": [
+                { "data": "Nombre" },
+                { "data": "CantPorDia" },
+                { "data": "Precio" },
+                { "data": "Detalle" },
+                {
+                    "defaultContent": '<button type ="button" class = "btn btn-primary btn-sm btn-editar"> <i class="fas fa-pen"> </i> </button>' +
+                        '<button type ="button" class = "btn btn-danger  btn-sm ms-2 btn-eliminar"> <i class="fas fa-trash"> </i> </button>',
+                    "orderable": false,
+                    "serchable": false,
+                }
+
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/2.0.2/i18n/es-ES.json"
+            }
+
+
+        })
+
+
+
+
+        function abrirModal(json) {
+
+            $("#txtNombre, #txtCantidadPordia, #txtPrecio, #txtDetalle").val("");
+            $("#mensajeError").hide();
+
+            if (json != null) {
+
+                $("#txtId").val(json.Id);
+                $("#txtNombre").val(json.Nombre);
+                $("#txtCantidadPordia").val(json.CantPorDia);
+                $("#txtPrecio").val(json.Precio);
+                $("#txtDetalle").val(json.Detalle);
+            }
+
+            $("#formModal").modal("show");
+        }
+
+
+        $("#Tabla tbody").on("click", '.btn-editar', function () {
+
+            filaSeleccionada = $(this).closest("tr");
+            var data = tablaData.row(filaSeleccionada).data();
+            abrirModal(data);
+        })
+
+
+
+        function Guardar() {
+
+
+            var Combo = {
+                Id: $("#txtId").val(),
+                Nombre: $("#txtNombre").val(),
+                CantPorDia: $("#txtCantidadPordia").val(),
+                Precio: $("#txtPrecio").val(),
+                Detalle: $("#txtDetalle").val(),
+
+            }
+
+            jQuery.ajax({
+
+                url: '@Url.Action("guardarCombo", "Copywriting")',
+                type: "POST",
+                data: JSON.stringify({ combo: Combo}),
+                dataType: "json",
+                contentType: "application/json: charset=utf-8",
+                success: function (data) {
+
+                    $(".modal-body").LoadingOverlay("hide");
+                    //Nuevo Combo
+                    if (Combo.Id == 0) {
+
+                        if (data.resultado != 0) {
+                            Combo.Id = data.resultado
+                            tablaData.row.add(Combo).draw(false)
+                            $("#formModal").modal("hide");
+                            tablaData.ajax.reload();
+
+                        }
+                        else {
+                            $("#mensajeError").text(data.mensaje);
+                            $("#mensajeError").show();
+
+
+                        }
+                    }
+                    //Editar Combo
+                    else {
+                        if (data.resultado) {
+                            tablaData.row(filaSeleccionada).data(Combo).draw(false);
+                            filaSeleccionada = null
+                            $("#formModal").modal("hide");
+                            tablaData.ajax.reload();
+                        }
+                        else {
+                            $("#mensajeError").text(data.mensaje);
+                            $("#mensajeError").show();
+                        }
+                    }
+                },
+                error: function (error) {
+                    $(".modal-body").LoadingOverlay("hide");
+                    $("#mensajeError").text("Error ajax");
+                    $("#mensajeError").show();
+                },
+
+                beforeSend: function () {
+
+                    $(".modal-body").LoadingOverlay("show", {
+                        imageResizeFactor: 2,
+                        text: "cargando...",
+                        size: 14
+                    });
+
+
+                }
+            })
+        }
+
+
+
+        $("#Tabla tbody").on("click", '.btn-eliminar', function () {
+
+            var comboSeleccionado = $(this).closest("tr");
+            var data = tablaData.row(comboSeleccionado).data();
+            console.log(data)
+            Swal.fire({
+                title: "¿Estas seguro?",
+                text: "¿Desea eliminar el combo?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                cancelButtonText: "Cancelar",
+                confirmButtonText: "Eliminar",
+
+            })
+
+                .then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: "Eliminado!",
+                        text: "Combo eliminado",
+                        icon: "success",
+
+                    });
+                    jQuery.ajax({
+                        url: '@Url.Action("eliminarCombo", "Copywriting")',
+                        type: "POST",
+                        data: JSON.stringify({ id: data.Id }),
+                        dataType: "json",
+                        contentType: "application/json: charset=utf-8",
+
+                        success: function (data) {
+                            if (data.resultado) {
+                                tablaData.row(comboSeleccionado).remove().draw()
+                            }
+                            else {
+                                Swal.fire("No se pudo eliminar el Combo.", data.mensaje, "error")
+                            }
+
+                         }
+
+                    })
+
+                }
+
+            });
+
+        })
+
+
+
+    </script>
+}

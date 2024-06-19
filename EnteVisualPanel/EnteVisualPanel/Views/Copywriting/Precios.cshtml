@@ -1,0 +1,228 @@
+﻿
+@{
+    ViewBag.Title = "Precios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-users me-1"></i> Lista de Precios
+
+    </div>
+
+
+
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12">
+                <button type="button" class="btn btn-primary" onclick="abrirModal()">Agregar nuevo</button>
+            </div>
+        </div>
+    </div>
+    <hr />
+
+
+    <table id="Tabla" class="  table is-striped is-hoverable" style="width: 100%">
+        <thead>
+            <tr>
+                <th>Caracteres</th>
+                <th>Precio</th>
+                <th></th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+
+<div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Agregar</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <input id="txtId" type="hidden" />
+
+                <div class="row g-2">
+
+                    <div class="col-sm-12">
+                        <label for="txtCaracteres" class="form-label">Caracteres</label>
+                        <input type="email" autocomplete="off" class="form-control" id="txtCaracteres">
+                    </div>
+
+                    <div class="col-sm-12">
+                        <label for="txtPrecio" class="form-label">Precio</label>
+                        <input type="email" autocomplete="off" class="form-control" id="txtPrecio">
+                    </div>
+
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <div id="mensajeError" class="alert alert-danger" role="alert">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="Guardar()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts{
+
+    <script>
+
+
+        var tablaData
+        var filaSeleccionada
+
+
+        tablaData = $("#Tabla").DataTable({
+
+            responsive: true,
+            ordering: false,
+
+            "ajax": {
+                url: '@Url.Action("listarPrecio", "Copywriting")',
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8"
+            },
+
+            "columns": [
+                { "data": "Caracteres" },
+                { "data": "Precios" },
+                {
+                    "defaultContent": '<button type ="button" class = "btn btn-primary btn-sm btn-editar"> <i class="fas fa-pen"> </i> </button>' +
+                        '<button type ="button" class = "btn btn-danger  btn-sm ms-2 btn-eliminar"> <i class="fas fa-trash"> </i> </button>',
+                    "orderable": false,
+                    "serchable": false,
+                }
+
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/2.0.2/i18n/es-ES.json"
+            }
+
+
+        })
+
+
+
+        function abrirModal(json) {
+
+            $("#txtCaracteres, #txtPrecio").val("");
+            $("#mensajeError").hide();
+
+            console.log(json)
+
+            if (json != null) {
+
+                $("#txtId").val(json.Id);
+                $("#txtCaracteres").val(json.Caracteres);
+                $("#txtPrecio").val(json.Precios);
+            }
+
+            $("#formModal").modal("show");
+        }
+
+
+        $("#Tabla tbody").on("click", '.btn-editar', function () {
+
+            filaSeleccionada = $(this).closest("tr");
+            var data = tablaData.row(filaSeleccionada).data();
+
+
+            abrirModal(data);
+        })
+
+
+
+
+        function Guardar() {
+
+
+            var Precio = {
+                Id: $("#txtId").val(),
+                Caracteres: $("#txtCaracteres").val(),
+                Precios: $("#txtPrecio").val(),
+            }
+
+            jQuery.ajax({
+
+                url: '@Url.Action("guardarPrecio", "Copywriting")',
+                type: "POST",
+                data: JSON.stringify({ precio: Precio }),
+                dataType: "json",
+                contentType: "application/json: charset=utf-8",
+                success: function (data) {
+
+                    $(".modal-body").LoadingOverlay("hide");
+                    //Nuevo Precio
+                    if (Precio.Id == 0) {
+
+                        if (data.resultado != 0) {
+                            Precio.Id = data.resultado
+                            tablaData.row.add(Precio).draw(false)
+                            $("#formModal").modal("hide");
+                            tablaData.ajax.reload();
+
+                        }
+                        else {
+                            $("#mensajeError").text(data.mensaje);
+                            $("#mensajeError").show();
+
+
+                        }
+                    }
+                    //Editar Precio
+                    else {
+                        if (data.resultado) {
+                            tablaData.row(filaSeleccionada).data(Precio).draw(false);
+                            filaSeleccionada = null
+                            $("#formModal").modal("hide");
+                            tablaData.ajax.reload();
+                        }
+                        else {
+                            $("#mensajeError").text(data.mensaje);
+                            $("#mensajeError").show();
+                        }
+                    }
+                },
+                error: function (error) {
+                    $(".modal-body").LoadingOverlay("hide");
+                    $("#mensajeError").text("Error ajax");
+                    $("#mensajeError").show();
+                },
+
+                beforeSend: function () {
+
+                    $(".modal-body").LoadingOverlay("show", {
+                        imageResizeFactor: 2,
+                        text: "cargando...",
+                        size: 14
+                    });
+
+
+                }
+            })
+        }
+
+
+
+
+
+
+
+
+
+    </script>
+}

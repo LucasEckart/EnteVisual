@@ -1,0 +1,392 @@
+USE [EnteVisualDB]
+GO
+/****** Object:  Table [dbo].[Cliente]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Cliente](
+	[IdCliente] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [varchar](50) NULL,
+	[Activo] [bit] NULL,
+	[Servicio] [varchar](50) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[IdCliente] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Combo]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Combo](
+	[IdCombo] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [varchar](50) NULL,
+	[CantidadPorDia] [int] NULL,
+	[Precio] [decimal](10, 2) NULL,
+	[Detalle] [varchar](50) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[IdCombo] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Copywriting]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Copywriting](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[IdCliente] [int] NULL,
+	[IdCombo] [int] NULL,
+	[Precio] [decimal](10, 2) NULL,
+	[Vencimiento] [varchar](50) NULL,
+	[Extras] [varchar](100) NULL,
+	[Mes] [varchar](15) NULL,
+	[Abonado] [bit] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Precios]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Precios](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Caracteres] [varchar](25) NULL,
+	[Precio] [decimal](10, 2) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[USUARIO]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[USUARIO](
+	[IdUsuario] [int] IDENTITY(1,1) NOT NULL,
+	[Nombre] [varchar](50) NULL,
+	[Apellido] [varchar](50) NULL,
+	[Correo] [varchar](50) NULL,
+	[Clave] [varchar](200) NULL,
+	[Telefono] [varchar](15) NULL,
+	[Reestablecer] [bit] NULL,
+	[Activo] [bit] NULL,
+	[Rol] [varchar](25) NULL,
+	[fechaCreacion] [datetime] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[IdUsuario] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Cliente] ADD  DEFAULT ((1)) FOR [Activo]
+GO
+ALTER TABLE [dbo].[USUARIO] ADD  CONSTRAINT [DF_usuario_Reestablecer]  DEFAULT ((1)) FOR [Reestablecer]
+GO
+ALTER TABLE [dbo].[USUARIO] ADD  DEFAULT (getdate()) FOR [fechaCreacion]
+GO
+ALTER TABLE [dbo].[Copywriting]  WITH CHECK ADD FOREIGN KEY([IdCliente])
+REFERENCES [dbo].[Cliente] ([IdCliente])
+GO
+ALTER TABLE [dbo].[Copywriting]  WITH CHECK ADD FOREIGN KEY([IdCombo])
+REFERENCES [dbo].[Combo] ([IdCombo])
+GO
+/****** Object:  StoredProcedure [dbo].[sp_editarCliente]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[sp_editarCliente](
+	@IdCliente  int,
+	@Nombre varchar(100),
+	@Activo bit,
+	@Servicio varchar(100),
+	@Resultado int output
+
+)
+as
+begin 
+	set @Resultado = 0
+
+update  top (1) Cliente set
+	Nombre = @Nombre,
+	Activo = @Activo,
+	Servicio = @Servicio
+	where IdCliente = @IdCliente
+	set @Resultado = 1
+
+
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_editarCombo]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[sp_editarCombo](
+@IdCombo int,
+@Nombre varchar(100),
+@CantidadPorDia int,
+@Precio decimal(10,2),
+@Detalle varchar(25),
+@Mensaje varchar(500) output,
+@Resultado int output
+)
+as
+begin 
+	set @Resultado = 0
+	begin
+
+	update  top (1) Combo set
+	Nombre = @Nombre,
+	CantidadPorDia = @CantidadPorDia,
+	Precio = @Precio,
+	Detalle = @Detalle
+
+	where IdCombo = @IdCombo
+
+	set @Resultado = 1
+	set @Mensaje = ''
+
+	end
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_editarCopy]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[sp_editarCopy](
+	@Id int,
+	@IdCliente int,
+	@IdCombo int,
+	@Precio decimal(10,2),
+	@Vencimiento varchar(50),
+	@Extras varchar(100) = NULL,
+	@Mes varchar(15),
+	@Abonado bit,
+	@Resultado int output,
+	@Mensaje varchar(500) output
+)
+as
+begin
+	set @Resultado = 0
+	begin 
+		update top (1) Copywriting set
+		IdCliente = @IdCliente,
+		IdCombo = @IdCombo,
+		Precio = @Precio,
+		Vencimiento = @Vencimiento,
+		Extras = @Extras,
+		Mes = @Mes,
+		Abonado = @Abonado
+		where Id = @Id
+
+		set @Resultado = 1 
+		end
+
+		set @Mensaje = ''
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_editarPrecio]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+create procedure [dbo].[sp_editarPrecio](
+	@Id int,
+	@Caracteres varchar(50),
+	@Precio decimal(10,2),
+	@Mensaje varchar(500) output,
+	@Resultado int output
+)
+as
+begin 
+	set @Resultado = 0
+	begin
+
+	update  top (1) Precios set
+	Caracteres = @Caracteres,
+	Precio = @Precio
+	where Id = @Id
+
+	set @Resultado = 1
+	set @Mensaje = ''
+	
+	end
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_editarUsuario]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[sp_editarUsuario](
+@IdUsuario  int,
+@Nombre varchar(100),
+@Apellido varchar(100),
+@Correo varchar(100),
+@Telefono int,
+@Rol varchar(25),
+@Activo bit, 
+@Mensaje varchar(500) output,
+@Resultado int output
+)
+as
+begin 
+	set @Resultado = 0
+	if not exists (select * from USUARIO where Correo = @Correo and	IdUsuario != @IdUsuario)
+	begin
+
+	update  top (1) USUARIO set
+	Nombre = @Nombre,
+	Apellido = @Apellido,
+	Correo = @Correo,
+	Telefono = @Telefono,
+	Rol = @Rol,
+	Activo = @Activo
+	where IdUsuario = @IdUsuario
+
+	set @Resultado = 1
+	end
+	else
+		set @Mensaje = 'El correo del usuario ya existe'
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_registrarCliente]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[sp_registrarCliente](
+	@Nombre varchar(100),
+	@Activo bit,
+	@Servicio varchar(100),
+	@Resultado int output
+)
+as
+begin 
+	SET @Resultado = 0
+
+insert into cliente values(@Nombre,@Activo,@Servicio)
+		set @Resultado = SCOPE_IDENTITY()
+
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_registrarCombo]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[sp_registrarCombo](
+	@Nombre varchar(100),
+	@CantidadPorDia int,
+	@Precio decimal(10,2),
+	@Detalle varchar(50),
+	@Mensaje varchar(500) output,
+	@Resultado int output
+
+)
+as
+begin 
+	SET @Resultado = 0
+
+insert into Combo values(@Nombre, @CantidadPorDia, @Precio, @Detalle)
+	set @Resultado = SCOPE_IDENTITY()
+
+	set @Mensaje = 'error'
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_registrarCopy]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[sp_registrarCopy](
+	@IdCliente int,
+	@IdCombo int,
+	@Precio decimal(10,2),
+	@Vencimiento varchar(50),
+	@Extras varchar(100) = NULL,
+	@Mes varchar(15),
+	@Abonado bit,
+	@Resultado int output,
+	@Mensaje varchar(500) output
+)
+as
+begin
+	SET @Resultado = 0
+	begin
+		insert into Copywriting(IdCliente, IdCombo, Precio, Vencimiento, Extras, Mes, Abonado) values
+		(@IdCliente, @IdCombo, @Precio, @Vencimiento, @Extras, @Mes, @Abonado )
+
+		set @Resultado = SCOPE_IDENTITY()
+
+	end
+	set @Mensaje = ''
+	
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_registrarPrecio]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+create procedure [dbo].[sp_registrarPrecio](
+	@Caracteres varchar(50),
+	@Precio decimal(10,2),
+	@Mensaje varchar(500) output,
+	@Resultado int output
+)
+as
+begin 
+	SET @Resultado = 0
+
+insert into Precios values(@Caracteres, @Precio)
+	set @Resultado = SCOPE_IDENTITY()
+
+	set @Mensaje = 'error'
+end
+GO
+/****** Object:  StoredProcedure [dbo].[sp_registrarUsuario]    Script Date: 19/6/2024 16:51:08 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[sp_registrarUsuario](
+@Nombre varchar(100),
+@Apellido varchar(100),
+@Correo varchar(100),
+@Clave varchar(100),
+@Telefono int,
+@Rol varchar(25),
+@Activo bit, 
+@Mensaje varchar(500) output,
+@Resultado int output
+)
+as 
+begin
+	SET @Resultado = 0
+	if not exists  (select * from USUARIO where Correo = @Correo)
+	begin
+		insert into USUARIO(Nombre, Apellido, Correo, Clave, Telefono, Rol, Reestablecer, activo) values
+		(@Nombre, @Apellido, @Correo, @Clave, @Telefono, @Rol, 1, @Activo)
+
+		set @Resultado = SCOPE_IDENTITY()
+	end
+	else
+		set @Mensaje = 'El correo del usuario ya existe'
+end
+GO
